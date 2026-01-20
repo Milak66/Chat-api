@@ -1,27 +1,7 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const cors = require('cors');
-const mongoose = require('mongoose');
-
-
-mongoose.connect('mongodb://localhost:27017/chatdb')
-  .then(() => {
-    console.log('MongoDB connected');
-  })
-  .catch((err) => {
-    console.error('MongoDB connection error:', err);
-  });
-
-const chatSchema = new mongoose.Schema({
-    messages: [
-        {
-            id: String,
-            message: String,
-            timestamp: { type: Date, default: Date.now }
-        }
-    ]
-});
-
-const Chat = mongoose.model('Chat', chatSchema);
 
 const app = express();
 const PORT = 5999;
@@ -33,7 +13,7 @@ app.use(cors({
 }));
 
 app.use((req, res, next) => {
-    res.setHeader("Content-Security-Policy", "default-src 'none'; connect-src 'self' http://localhost:5999");
+    res.setHeader("Content-Security-Policy", "default-src 'none'; connect-src 'self' https://chat-nine-xi-35.vercel.app");
     next();
 });
 
@@ -41,51 +21,43 @@ app.get('/', (req, res) => {
     res.send("Server started");
 });
 
+const dataFilePath = path.join(__dirname, 'data.json');
+
+function readMessagesData() {
+    const messagesData = fs.readFileSync(dataFilePath);
+    return JSON.parse(messagesData);
+}
+
+function writeMessagesData(data) {
+    fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
+}
+
 app.get('/messages', async (req, res) => {
-    try {
-        let chat = await Chat.findOne();
-        if (!chat) {
-            chat = new Chat({ messages: [] });
-            await chat.save();
-        }
-        res.json(chat.messages);
-    } catch (err) {
-        res.status(500).json({ error: 'Error fetching messages' });
-    }
+    const data = readMessagesData();
+    res.json(data.messages);
 });
 
 app.post('/addMessage', async (req, res) => {
-    const { id, message } = req.body;
-    try {
-        let chat = await Chat.findOne();
-        if (!chat) {
-            chat = new Chat({ messages: [] });
-        }
-        chat.messages.push({ id, message });
-        await chat.save();
+    const { message } = req.body;
 
-        console.log('Обновлённый массив сообщений:', chat.messages);
-
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Error saving message' });
+    if (!message) {
+        return res.status(400).json({ error: 'Missing id or message' });
     }
+
+    const data = readMessagesData();
+
+    data.messages.push({ message });
+
+    writeMessagesData(data);
+
+    res.json({ success: true });
 });
 
 app.post('/clearChat', async (req, res) => {
-    try {
-        let chat = await Chat.findOne();
-        if (!chat) {
-            chat = new Chat({ messages: [] });
-        } else {
-            chat.messages = [];
-        }
-        await chat.save();
-        console.log('Чат очищен через /clearChat');
-        res.json({ success: true, message: 'Chat has been cleared' });
-    } catch (err) {
-        res.status(500).json({ error: 'Error clearing chat' });
-    }
+    const data = { messages: [] };
+    writeMessagesData(data);
+    console.log('Chat has been cleared!');
+    res.json({ success: true, message: 'Chat has been cleared' });
 });
 
 app.listen(PORT, () => {
