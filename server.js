@@ -29,7 +29,7 @@ const PORT = 5999;
 app.use(express.json());
 
 app.use(cors({
-    origin: 'http://localhost:5173'
+    origin: 'https://chat-nine-xi-35.vercel.app'
 }));
 
 app.use((req, res, next) => {
