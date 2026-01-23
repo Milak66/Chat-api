@@ -57,7 +57,7 @@ app.post('/clearChat', async (req, res) => {
     const data = { messages: [] };
     writeMessagesData(data);
     console.log('Chat has been cleared!');
-    res.json({ success: true, message: 'Chat has been cleared' });
+    res.json({ success: true });
 });
 
 app.listen(PORT, () => {
