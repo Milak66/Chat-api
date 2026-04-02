@@ -10,10 +10,10 @@ const PORT = process.env.PORT || 5999;
 const server = http.createServer(app);
 
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: "https://funchat-ochre.vercel.app" }));
 
 const io = new Server(server, {
-  cors: { origin: "http://localhost:5173" },
+  cors: { origin: "https://funchat-ochre.vercel.app" },
 });
 
 const onlineUsers = new Map();
